@@ -1,0 +1,7 @@
+const DATEFORMATS={
+    DD_MM_YYYY:'DD MM YYYY',
+    MM_DD_YYYY:'MM DD YYYY',
+    YYYY_MM_DD:'YYYY MM DD',
+    MONTH_DAY_YEAR:'MMMM DD, YYYY',
+}
+export default DATEFORMATS;
