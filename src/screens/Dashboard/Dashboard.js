@@ -30,7 +30,7 @@ const Dashboard = () => {
           <ActivityIndicator size="large" color={colors.PRIMARY} />
         </View>
       ) : (
-        <Posts postData={posts?.data} />
+        <Posts postData={posts} />
       )}
     </View>
   );

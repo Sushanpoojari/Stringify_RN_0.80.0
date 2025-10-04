@@ -32,39 +32,48 @@ const postsSlice = createSlice({
   initialState: {
     posts: [],
     loading: false,
-    isRefreshing:false,
+    isRefreshing: false,
     error: null,
-    totalPage:0,
+    totalPage: 0,
+    hasMoreData: true,
     isVoting: false,
     userVoting: {},
   },
   reducers: {},
   extraReducers: builder => {
     builder
-      .addCase(fetchDashboardData.pending, (state,action) => {
+      .addCase(fetchDashboardData.pending, (state, action) => {
         if (action.meta.arg.pageNumber === 1) {
           state.loading = true;
-        }else{
-          state.isRefreshing=true;
+        } else {
+          state.isRefreshing = true;
         }
       })
       .addCase(fetchDashboardData.fulfilled, (state, action) => {
         state.loading = false;
-        state.isRefreshing=false;
+        state.isRefreshing = false;
 
-        if (action.meta.arg.pageNumber === 1) {
-          // First page -> New Data
-          state.posts = action.payload;
+        const { pageNumber, pageSize } = action.meta.arg;
+        const fetchedPosts = action.payload || [];
+
+        if (pageNumber === 1) {
+          state.posts = fetchedPosts;
         } else {
-          // Next pages -> append without duplicating
           const existingIds = new Set(state.posts.map(p => p._id));
-          const newPosts = action.payload.filter(p => !existingIds.has(p._id));
+          const newPosts = fetchedPosts.filter(p => !existingIds.has(p._id));
           state.posts = [...state.posts, ...newPosts];
+        }
+
+        // ✅ Correctly set hasMoreData
+        if (fetchedPosts.length < pageSize || fetchedPosts.length === 0) {
+          state.hasMoreData = false;
+        } else {
+          state.hasMoreData = true;
         }
       })
       .addCase(fetchDashboardData.rejected, (state, action) => {
         state.loading = false;
-        state.isRefreshing=false;
+        state.isRefreshing = false;
         state.error = action.error.message;
       })
       .addCase(votePost.pending, (state, action) => {
@@ -76,15 +85,15 @@ const postsSlice = createSlice({
         state.isVoting = false;
         const { questionId, voteType, userId } = action.meta.arg;
         state.userVoting[questionId] = false;
-      
+
         // Find the post in state
         const postIndex = state.posts.findIndex(p => p._id === questionId);
-      
+
         if (postIndex !== -1) {
           // Update votes with server response
           state.posts[postIndex].upvotes = action.payload.upvotes;
           state.posts[postIndex].downvotes = action.payload.downvotes;
-      
+
           // Update the hasCurrentUserVoted field
           if (state.posts[postIndex].hasCurrentUserVoted?.length > 0) {
             state.posts[postIndex].hasCurrentUserVoted[0].voteType = voteType;

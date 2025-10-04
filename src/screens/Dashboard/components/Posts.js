@@ -21,7 +21,7 @@ const USER_TYPE = {
 const Posts = ({ postData }) => {
     const dispatch = useDispatch();
     const [userVoteType, setuserVoteType] = useState(null);
-    const { isVoting, userVoting, isRefreshing } = useSelector(state => state.posts);
+    const { isVoting, userVoting, isRefreshing, hasMoreData,loading } = useSelector(state => state.posts);
     const user = useSelector(state => state.auth.user);
     const pageNumber = useRef(1);
     const navigation = useNavigation();
@@ -34,21 +34,21 @@ const Posts = ({ postData }) => {
     };
 
     const handleOnCommentsPressed = (postData) => {
-        navigation.navigate('Comments',{postData})
+        navigation.navigate('Comments', { postData })
     }
 
 
     const Post = ({ item }) => {
-    return (
-        <View style={styles.postContainer}>
-            <PostHeader item={item} />
-            <Text style={styles.postTitle}>{item.title}</Text>
-            <CustomCodeEditor codeToBeDisplayed={item.code} isReadOnly={true} />
-            {/* <Tags tags={item.tags} /> */}
-            <PostFooter item={item} />
-        </View>
-    )
-}
+        return (
+            <View style={styles.postContainer}>
+                <PostHeader item={item} />
+                <Text style={styles.postTitle}>{item.title}</Text>
+                <CustomCodeEditor codeToBeDisplayed={item.code} isReadOnly={true} />
+                {/* <Tags tags={item.tags} /> */}
+                <PostFooter item={item} />
+            </View>
+        )
+    }
 
     const PostHeader = ({ item }) => {
         const formattedDate = formatDate(item.created_at, DATEFORMATS.MONTH_DAY_YEAR)
@@ -94,7 +94,7 @@ const Posts = ({ postData }) => {
                     </TouchableOpacity>
                     <Text>{item.downvotes}</Text>
                 </View>
-                <TouchableOpacity onPress={()=>handleOnCommentsPressed(item)} >
+                <TouchableOpacity onPress={() => handleOnCommentsPressed(item)} >
                     <FontAwesome name="comment" size={28} color={colors.PRIMARY} />
                 </TouchableOpacity>
 
@@ -106,9 +106,20 @@ const Posts = ({ postData }) => {
 
 
     const fetchMoreData = () => {
+        console.log("hasMoreData", hasMoreData);
+
+        // Don’t fetch if already loading or no more data
+        if (!hasMoreData || isRefreshing || loading) return;
+
         pageNumber.current = pageNumber.current + 1;
-        dispatch(fetchDashboardData({ userId: user?._id, pageNumber: pageNumber.current }))
-    }
+        console.log("fetching More Data, page:", pageNumber.current);
+
+        dispatch(fetchDashboardData({
+            userId: user?._id,
+            pageNumber: pageNumber.current,
+            pageSize: 10   // ✅ Always pass pageSize
+        }));
+    };
 
     return (
         <View>
